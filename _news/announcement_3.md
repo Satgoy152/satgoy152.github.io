@@ -8,7 +8,7 @@ related_posts: false
 Tara Version Release!
 
 Introducing Tara V1.2: With improved interface experience, better chat response times, improved student audit checklist parsing.
-Newest release also provides links to atlas courses and quickstart with predefined prompts. Chat with Tara: <a href="https://talk2tara.streamlit.app/">TARA</a>
+Newest release also provides links to atlas courses and quickstart with predefined prompts. Chat with Tara: <a href="https://talk2tara.streamlit.app">TARA</a>
 
 ---
 
