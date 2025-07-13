@@ -15,6 +15,6 @@ news: true # includes a list of news items
 selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
-Hi! I'm Satyam Goyal, a junior at the University of Michigan, Ann Arbor, studying Computer Science. I'm passionate about machine learning and artificial intelligence, and I've worked on some exciting projects like developing an AI-based academic assistant and improving colorblind image correction algorithms. I'm aiming to build a career as a Machine Learning Engineer, using my skills in LLMs and data analysis to drive innovation.
+Hi! I'm Satyam Goyal, an incoming Masters student at the University of Michigan, Ann Arbor, studying Computer Science. I'm excited about GenAI applications specifically making agents that can rapidly learn. I'm particularly interested in RL and self-improvement in LLMs. I've worked on exciting projects like developing an AI-based academic assistant, improving colorblind image correction algorithms, and creating benchmarks for linguistic reasoning in LLMs.
 
 When I'm not immersed in tech, I love playing the Hindustani flute and enjoy a good game of table tennis. Thanks for getting to know a bit about me!
