@@ -1,0 +1,210 @@
+---
+layout: post
+title: My First Blog Post
+date: 2025-08-20 10:00:00-0400
+description: A brief description of what this post is about
+tags: machine-learning ai research
+categories: research
+giscus_comments: true
+related_posts: false
+---
+# Understanding SEDD: A Theoretically Grounded Approach to Discrete Diffusion for Language
+
+Diffusion models have revolutionized image generation, but their application to language has been far less successful. While autoregressive models like GPT continue to dominate text generation, there's a compelling reason to explore alternatives: diffusion-based language models can leverage bidirectional attention and enable more flexible generation patterns like infilling and controllable prompting from arbitrary positions.
+
+I'm currently working with Professor JJ Park at the University of Michigan on improving Masked Discrete Diffusion Models (MDLMs), which motivated me to revisit a 2024 paper that won best paper at ICML: "Discrete Diffusion Modeling by Estimating the Ratios of the Data Distribution" by Aaron Lou, Chenlin Meng, and Stefano Ermon at Stanford. In my view, this is one of the most theoretically grounded papers explaining why and how discrete diffusion can be an effective strategy for language generation.
+
+This blog aims to make the core concepts accessible, but I encourage reading the [full paper](https://arxiv.org/pdf/2310.16834), Aaron Lou's excellent [blog post](https://aaronlou.com/blog/2024/discrete-diffusion/), and his [presentation](https://www.youtube.com/watch?v=_1qv_LNjH9U) for deeper understanding.
+
+## The Problem with Discrete Diffusion for Language
+
+Most masked diffusion models for language follow a straightforward pattern: during forward diffusion, tokens from the original text are progressively replaced with MASK tokens. During reverse diffusion, the model learns to predict the original tokens at each masked position. You directly sample tokens from the model's output distribution at each position in the context window.
+
+This approach seems natural, but it has struggled to match autoregressive models in practice. The SEDD paper identifies a fundamental issue: existing training objectives for discrete diffusion don't properly capture the structure of discrete probability distributions.
+
+## The Key Insight: Modeling Probability Ratios
+
+Here's where SEDD diverges from prior work. Instead of predicting tokens directly, the model learns to predict ratio scores:
+
+$$
+s_\theta(x, t)[i, j] \approx \frac{p_t(\text{token } j \text{ at position } i)}{p_t(\text{current token at position } i)}
+$$
+
+This ratio tells us how likely we are to transition from the current token at position $i$ to any other token $j$ in the vocabulary. Why is this better? These ratios are the discrete analog of the score function $\nabla_x \log p_t(x)$ used in continuous diffusion models, giving us a theoretically principled connection to the well-established score matching framework.
+
+## Forward Diffusion with Transition Matrices
+
+To understand how SEDD works, we need to look at how the forward diffusion process corrupts the data. The process is governed by a continuous-time Markov chain defined by a transition rate matrix $Q_t$:
+
+$$
+\frac{dp_t}{dt} = Q_t p_t, \quad p_0 \approx p_{\text{data}}
+$$
+
+The matrix $Q_t$ has non-negative off-diagonal entries and columns that sum to zero, ensuring the total probability mass is conserved. The paper explores two specific transition structures:
+
+**Uniform Transition**: Every token can transition to any other token with equal probability. The transition matrix looks like:
+
+$$
+Q_{\text{uniform}} = \begin{bmatrix}
+1-N & 1 & \cdots & 1 \\
+1 & 1-N & \cdots & 1 \\
+\vdots & \vdots & \ddots & \vdots \\
+1 & 1 & \cdots & 1-N
+\end{bmatrix}
+$$
+
+where $N$ is the vocabulary size.
+
+**Absorbing Transition**: Tokens can only transition to a special MASK token, which acts as an absorbing state:
+
+$$
+Q_{\text{absorb}} = \begin{bmatrix}
+-1 & 0 & \cdots & 0 & 0 \\
+0 & -1 & \cdots & 0 & 0 \\
+\vdots & \vdots & \ddots & \vdots & \vdots \\
+0 & 0 & \cdots & -1 & 0 \\
+1 & 1 & \cdots & 1 & 0
+\end{bmatrix}
+$$
+
+The absorbing transition is particularly interesting because it mirrors BERT-style masking, which has proven effective for language understanding tasks.
+
+In practice, we scale these matrices by a noise schedule $\sigma(t)$, so $Q_t = \sigma(t) Q$. This allows us to control how quickly the corruption happens. The forward transition probabilities can be computed analytically:
+
+$$
+p_{t|0}^{\text{tok}}(\cdot|x) = \text{column } x \text{ of } \exp(\sigma(t) Q^{\text{tok}})
+$$
+
+This means at each timestep, tokens transition independently according to this probability distribution.
+
+## Score Entropy: The Main Contribution
+
+The paper's key theoretical contribution is the score entropy loss. Previous attempts to adapt score matching to discrete spaces struggled because they didn't properly handle the constraint that probability ratios must be positive. Concrete score matching, for instance, uses an $\ell_2$ loss that doesn't penalize negative predictions enough, leading to training instabilities.
+
+Score entropy is defined as:
+
+$$
+L_{SE} = \mathbb{E}_{x \sim p} \left[ \sum_{y \neq x} w_{xy} \left( s_\theta(x)_y - \frac{p(y)}{p(x)} \log s_\theta(x)_y + K\left(\frac{p(y)}{p(x)}\right) \right) \right]
+$$
+
+where $K(a) = a(\log a - 1)$ is a normalizing constant that ensures $L_{SE} \geq 0$.
+
+This loss is built on a Bregman divergence rather than the Fisher divergence used in standard score matching. Why does this matter? The score entropy loss naturally keeps the predicted ratios positive through a log-barrier effect. When you compute the gradient with respect to $s_\theta(x)_y$, you get a $\frac{1}{s_\theta(x)_y}$ scaling factor that grows large as predictions approach zero, preventing the network from outputting negative or zero values.
+
+The beauty of score entropy is that it generalizes cross-entropy to arbitrary positive values, not just probability distributions. It's non-negative, symmetric, and convex, making it a proper loss function. Most importantly, when you minimize it with enough data and model capacity, you provably recover the true probability ratios.
+
+## Making Score Entropy Tractable
+
+The score entropy loss as written contains unknown ground truth ratios $\frac{p(y)}{p(x)}$. To make this practical, the paper derives a denoising variant analogous to denoising score matching in continuous diffusion:
+
+$$
+L_{DSE} = \mathbb{E}_{x_0 \sim p_0} \mathbb{E}_{x \sim p(\cdot|x_0)} \left[ \sum_{y \neq x} w_{xy} \left( s_\theta(x)_y - \frac{p(y|x_0)}{p(x|x_0)} \log s_\theta(x)_y \right) \right]
+$$
+
+This is computationally efficient because we only need to evaluate $s_\theta(x)$ once per sample (giving us all ratios for that position), and the conditional transition probabilities $\frac{p(y|x_0)}{p(x|x_0)}$ are known from our forward process.
+
+For training, the full diffusion-weighted denoising score entropy integrates this loss over time:
+
+$$
+L_{DWDSE}(x_0) = \int_0^T \mathbb{E}_{x_t \sim p_{t|0}(\cdot|x_0)} \left[ \sum_{y \neq x_t} Q_t(x_t, y) \left( s_\theta(x_t, t)_y - \frac{p_{t|0}(y|x_0)}{p_{t|0}(x_t|x_0)} \log s_\theta(x_t, t)_y + K\left(\frac{p_{t|0}(y|x_0)}{p_{t|0}(x_t|x_0)}\right) \right) \right] dt
+$$
+
+The paper proves this provides an upper bound on the negative log-likelihood, allowing for principled likelihood-based evaluation and training.
+
+## Reverse Diffusion and Sampling
+
+Once we've learned the score function $s_\theta(x, t)$, we can define the reverse diffusion process. The reverse transition rates are given by:
+
+$$
+\tilde{Q}_t(y, x) = \frac{p_t(y)}{p_t(x)} Q_t(x, y)
+$$
+
+Since we've learned the ratios $s_\theta(x, t)_y \approx \frac{p_t(y)}{p_t(x)}$, we can construct an approximate reverse process:
+
+$$
+\tilde{Q}_t^\theta(y, x) = s_\theta(x, t)_y Q_t(x, y)
+$$
+
+The reverse process follows:
+
+$$
+\frac{dp_{T-t}^{\theta}}{dt} = \tilde{Q}_{T-t}^\theta p_{T-t}^{\theta}, \quad p_T^\theta = p_{\text{base}} \approx p_T
+$$
+
+## A Concrete Example: Forward and Reverse Diffusion
+
+Let's walk through a simplified example using absorbing transitions with the sentence "cat in hat" (3 tokens). Suppose our vocabulary is {cat, in, hat, dog, the, MASK} with size $N=6$.
+
+**Forward Diffusion Example:**
+
+Starting with $x_0 = [\text{cat}, \text{in}, \text{hat}]$ at $t=0$, we apply the absorbing transition. Let's say we're at $t=0.5$ with noise schedule giving $\sigma(0.5) = 1.5$.
+
+The transition probability from "cat" to MASK is given by the exponential of the scaled Q matrix:
+
+$$
+p_{0.5|0}(\text{MASK}|\text{cat}) = [\exp(1.5 \cdot Q_{\text{absorb}})]_{\text{cat}, \text{MASK}} \approx 0.78
+$$
+
+After sampling, we might get $x_{0.5} = [\text{MASK}, \text{in}, \text{MASK}]$. Each token transitions independently, so "in" happened to stay unchanged while "cat" and "hat" both transitioned to MASK.
+
+**Reverse Diffusion Example:**
+
+Now let's reverse from $x_{0.5} = [\text{MASK}, \text{in}, \text{MASK}]$ back toward $t=0$.
+
+At position 0 (currently MASK), our model predicts scores:
+
+- $s_\theta(x_{0.5}, 0.5)[0, \text{cat}] = 4.2$
+- $s_\theta(x_{0.5}, 0.5)[0, \text{dog}] = 0.8$
+- $s_\theta(x_{0.5}, 0.5)[0, \text{the}] = 1.1$
+- $s_\theta(x_{0.5}, 0.5)[0, \text{in}] = 0.3$
+- $s_\theta(x_{0.5}, 0.5)[0, \text{hat}] = 0.5$
+
+These scores represent the ratio $\frac{p_{0.5}(\text{token } j \text{ at position } 0)}{p_{0.5}(\text{MASK at position } 0)}$.
+
+To sample the reverse step using Tweedie denoising (the paper's recommended strategy), we compute:
+
+$$
+p(x_0^{(0)} | x_{0.5}) \propto [\exp(-\sigma_{0.5}^{0.5} Q) \cdot s_\theta(x_{0.5}, 0.5)[0]]_{x_0^{(0)}} \cdot \exp(\sigma_{0.5}^{0.5} Q)(\text{MASK}, x_0^{(0)})
+$$
+
+where $\sigma_{0.5}^{0.5} = \sigma(0.5) - \sigma(0)$ is the cumulative noise difference.
+
+This computation combines our learned scores with the known forward transition structure to optimally denoise. With our scores above, "cat" has the highest ratio, so it's most likely to be sampled at position 0.
+
+After applying this at each position, we might get $x_0 = [\text{cat}, \text{in}, \text{hat}]$, successfully recovering the original text.
+
+The key insight is that by modeling ratios rather than direct probabilities, we can compose the reverse transitions in a theoretically principled way that leverages the structure of the forward process.
+
+## Why This Works Better
+
+The combination of score entropy training and ratio-based parameterization leads to substantial improvements:
+
+On GPT-2 zero-shot tasks, SEDD Absorb beats GPT-2 on the majority of benchmarks for perplexity. On the One Billion Words dataset, it reduces perplexity by 50-75% compared to prior diffusion models. For unconditional generation quality (measured by generative perplexity), SEDD produces 6-8× better samples than unannealed GPT-2 and can match GPT-2 quality using 32× fewer function evaluations.
+
+Perhaps most impressively, SEDD enables controllable infilling without specialized training. Because the model learns probability ratios, you can condition on arbitrary positions through Bayes' rule. For text infilling tasks, SEDD matches nucleus sampling quality from autoregressive models while supporting more flexible prompting strategies.
+
+## Closing Thoughts
+
+The SEDD paper demonstrates that with the right theoretical foundation, discrete diffusion can match or exceed autoregressive models for language generation. The score entropy loss solves a fundamental problem in adapting score matching to discrete spaces, providing a principled training objective that actually works in practice.
+
+What excites me most about this work is how it opens up new possibilities for language modeling. Bidirectional attention, parallel generation, and flexible conditioning are all natural in the diffusion framework but difficult to achieve with autoregressive models. As we continue improving masked discrete diffusion models, papers like SEDD provide the theoretical grounding to make meaningful progress.
+
+The gap with large language models remains significant, but SEDD shows the path forward: sound theory combined with careful implementation can challenge the dominance of autoregressive modeling.
+
+## References
+
+Lou, A., Meng, C., & Ermon, S. (2024). Discrete Diffusion Modeling by Estimating the Ratios of the Data Distribution. *Proceedings of the 41st International Conference on Machine Learning (ICML)*, Vienna, Austria.
+
+Austin, J., Johnson, D. D., Ho, J., Tarlow, D., & van den Berg, R. (2021). Structured Denoising Diffusion Models in Discrete State-Spaces. *Advances in Neural Information Processing Systems (NeurIPS)*.
+
+Ho, J., Jain, A., & Abbeel, P. (2020). Denoising Diffusion Probabilistic Models. *Advances in Neural Information Processing Systems (NeurIPS)*.
+
+Song, Y., & Ermon, S. (2019). Generative Modeling by Estimating Gradients of the Data Distribution. *Advances in Neural Information Processing Systems (NeurIPS)*.
+
+Hyvärinen, A. (2005). Estimation of Non-Normalized Statistical Models by Score Matching. *Journal of Machine Learning Research*, 6, 695-709.
+
+Devlin, J., Chang, M. W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. *Proceedings of NAACL-HLT*.
+
+Campbell, A., Benton, J., De Bortoli, V., Rainforth, T., Deligiannidis, G., & Doucet, A. (2022). A Continuous Time Framework for Discrete Denoising Models. *Advances in Neural Information Processing Systems (NeurIPS)*.
+
+Gulrajani, I., & Hashimoto, T. (2023). PLAID: An Efficient Engine for Late Interaction Document Re-ranking. *arXiv preprint arXiv:2301.11308*.
