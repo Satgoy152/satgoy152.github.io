@@ -8,4 +8,4 @@ description: Check out my projects.
 ---
 
 
-{% include projects.liquid %}
+<!-- {% include projects.liquid %} -->
