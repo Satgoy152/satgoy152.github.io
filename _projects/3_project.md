@@ -3,7 +3,7 @@ layout: page
 title: improving masked diffusion models
 description: Alternative GenAI architectures using RL and confidence-based masking
 importance: 3
-category: research
+category: academic
 related_publications: false
 giscus_comments: false
 ---

@@ -3,7 +3,7 @@ layout: page
 title: memory layers for continual learning in LLMs
 description: efficient continual learning through optimized memory layers
 importance: 4
-category: research
+category: academic
 related_publications: false
 giscus_comments: false
 ---

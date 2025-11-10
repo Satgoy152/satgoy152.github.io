@@ -2,8 +2,8 @@
 layout: page
 title: fairness transformer
 description: Transformer architecture for discrete fair division problems
-importance: 2
-category: research
+importance: 1
+category: academic
 related_publications: false
 giscus_comments: false
 ---
