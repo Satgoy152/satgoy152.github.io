@@ -1,13 +1,12 @@
 ---
 layout: page
-title: Memory Layers for Continual Learning in LLMs
-description: Efficient continual learning through optimized memory layers
+title: memory layers for continual learning in LLMs
+description: efficient continual learning through optimized memory layers
 importance: 4
 category: research
 related_publications: false
 giscus_comments: false
 ---
-
 ## Overview
 
 This research project investigates whether large language models can effectively use memory layers through fine-tuning rather than training from scratch. Working under the supervision of Prof. Samet Oymak at the University of Michigan, we're exploring efficient approaches to continual learning that could enable existing models to adapt and learn continuously without catastrophic forgetting.
@@ -19,6 +18,7 @@ This research project investigates whether large language models can effectively
 Traditional approaches to adding memory capabilities to language models require expensive ground-up pretraining. Our research asks a crucial question: **Can we retrofit existing LLMs with memory layers through fine-tuning alone?**
 
 If successful, this approach would:
+
 - Enable many current models to use memory layers efficiently
 - Provide an efficient source of continual learning
 - Reduce computational costs compared to full retraining
@@ -44,6 +44,7 @@ A fundamental challenge in continual learning is **catastrophic forgetting**, wh
 ## Potential Impact
 
 If successful, this research could:
+
 - **Democratize advanced capabilities**: Enable existing models to gain memory and continual learning abilities
 - **Reduce costs**: Avoid expensive retraining from scratch
 - **Enable adaptation**: Allow models to continuously learn and adapt in deployment

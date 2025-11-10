@@ -1,13 +1,12 @@
 ---
 layout: page
-title: Improving Masked Diffusion Models
+title: improving masked diffusion models
 description: Alternative GenAI architectures using RL and confidence-based masking
 importance: 3
 category: research
 related_publications: false
 giscus_comments: false
 ---
-
 ## Overview
 
 This research project explores improvements to Masked Diffusion Language Models (MDLMs), an alternative generative AI architecture to traditional autoregressive models. Working with Prof. JJ (Jeong Joon) Park, we're developing novel training techniques and algorithms to enhance the performance and efficiency of MDLMs.
@@ -21,15 +20,19 @@ Masked Diffusion Language Models represent a promising alternative to standard t
 ## Key Contributions
 
 ### Reinforcement Learning Integration
+
 Using Reinforcement Learning techniques combined with confidence-based masking algorithms to improve MDLM performance. This approach allows the model to learn more effective masking strategies during training.
 
 ### Large-Scale Training
+
 - Training an **11 billion parameter MDLM** on **100 billion tokens**
 - Leveraging Unsloth for efficient training at scale
 - Pushing the boundaries of MDLM size and training data
 
 ### Novel Algorithmic Approaches
+
 Designing and implementing novel time-based unmasking and masking algorithms that improve upon existing MDLM training procedures. These algorithms optimize:
+
 - Token masking strategies during training
 - Unmasking schedules for generation
 - Confidence-based decision making
@@ -48,6 +51,7 @@ Designing and implementing novel time-based unmasking and masking algorithms tha
 ## Why MDLMs Matter
 
 Unlike autoregressive models that generate text left-to-right one token at a time, Masked Diffusion Models can:
+
 - Generate multiple tokens in parallel
 - Iteratively refine generated text
 - Offer different inference speed/quality trade-offs
