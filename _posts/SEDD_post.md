@@ -5,7 +5,6 @@ date: 2025-08-20 10:00:00-0400
 description: A brief description of what this post is about
 tags: machine-learning ai research
 categories: research
-featured: true
 giscus_comments: true
 related_posts: false
 ---
