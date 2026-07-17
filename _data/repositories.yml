@@ -4,6 +4,7 @@ github_users:
 repo_description_lines_max: 2
 
 github_repos:
-  - Satgoy152/tara
-  - Satgoy152/EnColorExperiments 
-  - Satgoy152/ling_llm
+  - Satgoy152/mdlm_refine
+  - Satgoy152/dvd
+  - Satgoy152/finetuningmemorylayers
+  - Satgoy152/llm-fairness

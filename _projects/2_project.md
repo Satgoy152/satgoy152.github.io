@@ -2,7 +2,7 @@
 layout: page
 title: fairness transformer
 description: Transformer architecture for discrete fair division problems
-importance: 1
+importance: 5
 category: academic
 related_publications: false
 giscus_comments: false
@@ -12,7 +12,7 @@ giscus_comments: false
 This research project focuses on designing and training a transformer architecture to solve discrete fair division problems in game theory. Working under the supervision of Dr. Mithun Chakraborty at the University of Michigan, we're developing machine learning approaches to tackle NP-hard allocation problems that are computationally challenging for traditional algorithms.
 
 **Timeline**: June 2025 – October 2025
-**Status**: AAMAS Pending
+**Status**: NeurIPS 2026 Pending
 
 ## Research Contributions
 
@@ -60,4 +60,4 @@ University of Michigan, Ann Arbor
 
 ## Publication Status
 
-Paper submitted to AAMAS (International Conference on Autonomous Agents and Multiagent Systems)
+Paper submitted to NeurIPS 2026 (Conference on Neural Information Processing Systems)

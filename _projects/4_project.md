@@ -2,7 +2,7 @@
 layout: page
 title: memory layers for continual learning in LLMs
 description: efficient continual learning through optimized memory layers
-importance: 4
+importance: 6
 category: academic
 related_publications: false
 giscus_comments: false
@@ -12,6 +12,11 @@ giscus_comments: false
 This research project investigates whether large language models can effectively use memory layers through fine-tuning rather than training from scratch. Working under the supervision of Prof. Samet Oymak at the University of Michigan, we're exploring efficient approaches to continual learning that could enable existing models to adapt and learn continuously without catastrophic forgetting.
 
 **Timeline**: Ongoing
+**Status**: Results published as *Improving Sparse Memory Finetuning*, ICML 2026
+
+## Results
+
+Retrofitted **Qwen-2.5** with sparse memory layers through fine-tuning alone (no pretraining from scratch), using KL-divergence-based finetuning algorithms. This reduced catastrophic forgetting by **90%** compared to standard fine-tuning, showing that existing LLMs can be given interpretable, memory-layer-based continual learning without the cost of retraining.
 
 ## Research Motivation
 

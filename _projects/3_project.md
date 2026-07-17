@@ -1,65 +1,38 @@
 ---
 layout: page
-title: improving masked diffusion models
-description: Alternative GenAI architectures using RL and confidence-based masking
-importance: 3
+title: diffusion language models (ECHO)
+description: Sampling-aware MDLM training that outperforms SOTA by 15% on reasoning benchmarks
+importance: 1
 category: academic
 related_publications: false
 giscus_comments: false
 ---
+
 ## Overview
 
-This research project explores improvements to Masked Diffusion Language Models (MDLMs), an alternative generative AI architecture to traditional autoregressive models. Working with Prof. JJ (Jeong Joon) Park, we're developing novel training techniques and algorithms to enhance the performance and efficiency of MDLMs.
+Masked Diffusion Language Models (MDLMs) are one of the few credible alternatives to autoregressive generation: bidirectional attention, parallel token generation, and native support for infilling and controllable generation from arbitrary positions. The catch is that they still lag autoregressive models on quality and are expensive to train well. This project, advised by Prof. JJ (Jeong Joon) Park at the University of Michigan, is about closing that gap.
 
-**Timeline**: August 2025 – Present
+**Timeline**: August 2024 – Present
 
-## Research Goals
+## ECHO: Sampling-Aware Training
 
-Masked Diffusion Language Models represent a promising alternative to standard transformer architectures, offering different trade-offs in generation quality, speed, and training efficiency. Our work focuses on pushing the boundaries of what's possible with MDLMs through innovative training approaches.
+The core of this work is **ECHO**, a training algorithm grounded in constrained Gibbs sampling (MCMC) rather than the standard independent-masking objective most MDLMs use. Instead of training the model to denoise positions independently, ECHO trains against a sampling procedure that better matches how the model will actually be used to generate text at inference time — and it outperforms comparable SOTA MDLM training methods by **15%** on reasoning benchmarks.
 
-## Key Contributions
+- Designed and implemented a sampling-aware training objective built on constrained Gibbs sampling
+- Engineered a distributed training pipeline across 8xA100 clusters
+- Scaled training to **50B tokens** while cutting memory overhead by **30%**
+- Pretrained and finetuned models ranging from **100M to 8B parameters**
 
-### Reinforcement Learning Integration
+## Self-Correction: `mdlm_refine`
 
-Using Reinforcement Learning techniques combined with confidence-based masking algorithms to improve MDLM performance. This approach allows the model to learn more effective masking strategies during training.
+A parallel thread of this work asks a more specific question: can an MDLM learn to catch and fix its own generation errors *during training*, instead of relying on inference-time correction procedures bolted on after the fact? That's the idea behind [`mdlm_refine`](https://github.com/Satgoy152/mdlm_refine) — see the [dedicated project page](/projects/5_project/) for details, including how it stacks up against Kuleshov et al.'s recent self-correcting diffusion work out of Cornell / Inception Labs.
 
-### Large-Scale Training
+## Where This Is Headed
 
-- Training an **11 billion parameter MDLM** on **100 billion tokens**
-- Leveraging Unsloth for efficient training at scale
-- Pushing the boundaries of MDLM size and training data
+Two problems keep MDLMs from being competitive with autoregressive models at scale, and I'm actively working on both:
 
-### Novel Algorithmic Approaches
-
-Designing and implementing novel time-based unmasking and masking algorithms that improve upon existing MDLM training procedures. These algorithms optimize:
-
-- Token masking strategies during training
-- Unmasking schedules for generation
-- Confidence-based decision making
-
-## Technical Approach
-
-- **Model Size**: 11B parameters
-- **Training Data**: 100B tokens
-- **Training Framework**: Unsloth (optimized training)
-- **Key Techniques**:
-  - Reinforcement Learning for masking optimization
-  - Confidence-based masking algorithms
-  - Time-based unmasking strategies
-  - Novel masking schedules
-
-## Why MDLMs Matter
-
-Unlike autoregressive models that generate text left-to-right one token at a time, Masked Diffusion Models can:
-
-- Generate multiple tokens in parallel
-- Iteratively refine generated text
-- Offer different inference speed/quality trade-offs
-- Potentially enable new applications
-
-## Research Impact
-
-This work contributes to the growing exploration of alternative architectures for large language models, potentially offering more efficient or capable alternatives to standard transformer-based approaches.
+- **Inference speed** — see [speculative decoding for diffusion LMs](/projects/6_project/)
+- **Training and long-context efficiency** — see [what's next](/projects/7_project/) for early work on a diffusion-native optimizer and long-context attention
 
 ## Collaboration
 
